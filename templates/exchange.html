@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ exchange.name }}</title>
+</head>
+<body>
+    <h1>{{ exchange.name }}</h1>
+    <form action="/exchanges/{{ exchange.id }}/delete/" method="post">
+        <button type="submit">Delete</button>
+    </form>
+    <a href="/exchanges/">Back to Exchanges</a>
+</body>
+</html>

@@ -1,0 +1,30 @@
+TimescaleDB
+    remove postgres
+    restart
+    install postgres
+    restart
+    install timescaledb
+    check postgresql.conf file
+        # Add the TimescaleDB library to shared_preload_libraries
+        shared_preload_libraries = 'timescaledb'
+    create a db
+        psql -U postgres
+            -- Create the new database
+            CREATE DATABASE market_data;
+
+            -- Connect to the new database
+            \c market_data
+
+            -- Enable TimescaleDB extension
+            CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
+
+            -- Verify the extension
+            \dx
+    migrate
+        pip install --upgrade sqlalchemy
+        setup alembic ORM
+            pip install alembic
+            alembic init alembic
+        alembic.ini
+            sqlalchemy.url = postgresql+asyncpg://postgres:qwerty123@localhost:5432/market_data
+            sqlalchemy.url = postgresql+psycopg2://postgres:qwerty123@localhost:5432/market_data

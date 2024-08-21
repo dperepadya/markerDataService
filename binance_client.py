@@ -1,0 +1,128 @@
+import os
+import asyncio
+from abc import abstractmethod, ABC
+
+# from binance.websocket.um_futures.websocket_client import UMFuturesWebsocketClient
+from binance import AsyncClient, BinanceSocketManager
+from message_processor import MessageProcessor, BinanceMessageProcessor
+
+
+class ExchangeClient(ABC):
+    def __init__(self, api_key: str, api_secret: str):
+        pass
+
+    @abstractmethod
+    async def init_client(self):
+        pass
+
+    @abstractmethod
+    async def subscribe(self, symbol: str, channel: str):
+        pass
+
+    @abstractmethod
+    async def unsubscribe(self, symbol: str, channel: str):
+        pass
+
+class BinanceClient(ExchangeClient):
+    def __init__(self, api_key: str, api_secret: str):
+        super().__init__(api_key, api_secret)
+        self.name = 'binance'
+        self.api_key = api_key
+        self.api_secret = api_secret
+        self.client = None
+        self.bm = None
+        self.is_running = False
+        # {('BTCUSDT', 'ticker'); task}
+        self.stream_tasks = {}
+        self.message_processor = None
+        self.depth = 5
+        self.interval = 100
+
+    # def set_message_processor(self, processor: MessageProcessor, queue_manager):
+    #     self.message_processor = processor
+    #     self.message_processor.queue_manager = queue_manager
+
+    async def init_client(self):
+        self.client = await AsyncClient.create(self.api_key, self.api_secret)
+        self.bm = BinanceSocketManager(self.client)
+
+    async def subscribe(self, symbol, channel):
+        if symbol is None or channel is None:
+            return False
+        if self.client is None:
+            await self.init_client()
+        key = (symbol, channel)
+        if key in self.stream_tasks:
+            return True
+        task = asyncio.create_task(self.start_listener(symbol, channel))
+        self.stream_tasks[key] = task
+        return True
+
+    async def unsubscribe(self, symbol=None, channel=None):
+        if self.client is None or not self.is_running:
+            return True
+        keys_to_remove = []
+
+        if channel is None:
+            if symbol is None:
+                # unsubscribe from all
+                keys_to_remove = list(self.stream_tasks.keys())
+            else:
+                # unsubscribe from all symbol channels
+                keys_to_remove = [(sym, chan) for (sym, chan) in self.stream_tasks.keys() if sym == symbol]
+        else:
+            if symbol is None:
+                # unsubscribe from all such channels
+                keys_to_remove = [(sym, chan) for (sym, chan) in self.stream_tasks.keys() if chan == channel]
+            else:
+                # unsubscribe from specific symbol and channel
+                key = (symbol, channel)
+                if key not in self.stream_tasks:
+                    raise KeyError(f'Symbol {symbol} and channel {channel} not found in stream tasks')
+                keys_to_remove = [key]
+
+        for key in keys_to_remove:
+            task = self.stream_tasks.get(key)
+            if task:
+                task.cancel()
+            del self.stream_tasks[key]
+
+    async def stop(self):
+        if self.client is None:
+            raise ValueError("Binance API Client is not connected")
+        if not self.is_running:
+            return
+        self.is_running = False
+        for key in self.stream_tasks.keys():
+            task = self.stream_tasks.pop(key)
+            task.cancel()
+        await self.client.close_connection()
+
+    async def start_listener(self, symbol: str, channel: str):
+        if self.client is None:
+            await self.init_client()
+        if not self.is_running:
+            self.is_running = True
+        if channel == 'trades':
+            socket = self.bm.trade_socket(symbol)
+        elif channel == 'order_book':
+            socket = self.bm.depth_socket(symbol) #, self.depth, self.interval)
+        # elif:
+        # elif
+        else:
+            raise ValueError("Unsupported channel")
+
+        async with socket as stream:
+            try:
+                while self.is_running:
+                    msg = await stream.recv()
+                    # print(msg)
+                    await self.message_processor.process_message(msg, self.name)
+            except asyncio.CancelledError:
+                print(f'Task {self.name} {symbol} {channel} cancelled')
+                return
+            except Exception as e:
+                print(f'Unexpected error: {e}')
+            finally:
+                print(f'Task {self.name} {symbol} {channel} stopped')
+

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exchanges</title>
+</head>
+<body>
+    <h1>Exchanges</h1>
+    <ul>
+        {% for exchange in exchanges %}
+            <li><a href="/exchanges/{{ exchange.id }}">{{ exchange.name }}</a></li>
+        {% endfor %}
+    </ul>
+    <a href="/exchanges/add/">Add Exchange</a>
+</body>
+</html>
