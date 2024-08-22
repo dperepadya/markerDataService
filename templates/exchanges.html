@@ -3,14 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>Exchanges</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
     <h1>Exchanges</h1>
-    <ul>
-        {% for exchange in exchanges %}
-            <li><a href="/exchanges/{{ exchange.id }}">{{ exchange.name }}</a></li>
-        {% endfor %}
-    </ul>
-    <a href="/exchanges/add/">Add Exchange</a>
+    {% if not exchanges %}
+        <p>No exchanges found.</p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in exchanges %}
+                <tr>
+                    <td><a href="/exchanges/{{ row.id }}/">{{ row.id }}</a></td>
+                    <td>{{row.name}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+    <a href="/exchanges/add/"><button>Add Exchange</button></a>
 </body>
 </html>

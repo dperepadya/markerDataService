@@ -3,6 +3,10 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class ExchangeModel(BaseModel):
+    id: int
+    name: str
+
 class MarketDataBase(BaseModel):
     symbol: str
     instrument: str

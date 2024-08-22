@@ -52,11 +52,13 @@ class BinanceMessageProcessor(MessageProcessor):
         if msg['e'] == 'trade':
             channel = msg['e']
             data = self.parse_trade_message(msg)
+
         elif msg['e'] == 'depthUpdate':
             channel = msg['e']
             data = self.parse_order_book_message(msg)
         if data is not None:
             # await self.publish_message(data, channel, sender)
+            data['sender'] = sender
             print(data)
 
 

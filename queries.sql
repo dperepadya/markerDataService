@@ -18,3 +18,4 @@ CREATE TABLE public.tickers (
 
 -- Create the hypertable
 SELECT create_hypertable('public.tickers', 'timestamp');
+

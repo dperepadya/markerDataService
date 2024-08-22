@@ -1,11 +1,15 @@
 import asyncio
 import os
 
+import uvicorn
 from fastapi import FastAPI
-from starlette.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import RedirectResponse
+from controllers import exchange_controllers, symbol_controllers
 
 import database
 from binance_client import BinanceClient
+from controllers import symbol_controllers
 from rabbitmq_client import RabbitMQClient
 from message_processor import BinanceMessageProcessor
 from subscription_manager import SubscriptionManager
@@ -13,7 +17,7 @@ from subscription_manager import SubscriptionManager
 ASYNC_MODE = False
 
 app = FastAPI()
-
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 api_key = os.getenv('BINANCE_API_KEY')
 api_secret = os.getenv('BINANCE_API_SECRET')
@@ -28,22 +32,24 @@ binance_client.message_processor = BinanceMessageProcessor(queue_manager=rabbitm
 
 is_async_mode = os.environ.get('IS_ASYNC_MODE', 'True')
 
-app.include_router(exchange_router)
+app.include_router(exchange_controllers.router, prefix="/exchanges", tags=["exchanges"])
+app.include_router(symbol_controllers.router, prefix="/exchanges/{exchange_id}/symbols", tags=["symbols"])
 
 @app.on_event("startup")
 async def startup_event():
     print("Init DB")
     if is_async_mode:
-        await database.init_db_async()
+        # asyncio.run(await database.init_db_async())
+        pass
     else:
         database.init_db()
-    print("Starting Subscription Manager")
-    await subscription_manager.add_exchange("binance", binance_client)
-    print("Subscribed to Binance")
+    # print("Starting Subscription Manager")
+    # await subscription_manager.add_exchange("binance", binance_client)
+    # print("Subscribed to Binance")
     # await subscription_manager.subscribe("binance", "BTCUSDT", "trades")
-    await subscription_manager.subscribe("binance", "BTCUSDT", "order_book")
+    # await subscription_manager.subscribe("binance", "BTCUSDT", "order_book")
 
-    await asyncio.sleep(5)
+    # await asyncio.sleep(5)
     #await subscription_manager.unsubscribe("binance", "BTCUSDT", "trades")
     #await subscription_manager.unsubscribe("binance", "BTCUSDT", "order_book")
     #await asyncio.sleep(5)
@@ -52,7 +58,9 @@ async def startup_event():
     # await subscription_manager.subscribe("binance", "BTCUSDT", "trades")
     # await subscription_manager.subscribe("binance", "BTCUSDT", "order_book")
 
-
+@app.get('/')
+def landing():
+    return RedirectResponse('/exchanges/')
 
 # @app.get("/tickers")
 # async def read_tickers(db: AsyncSession = Depends(database.get_db)):
@@ -94,10 +102,11 @@ async def shutdown_event():
 #         raise HTTPException(status_code=400, detail="Stream not started")
 #     await binance_client.stop_stream()
 #     return {"message": "Stream stopped"}
-async def main():
-    pass
+# async def main():
+#     pass
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # asyncio.run(main())
+    uvicorn.run("main:app", host="0.0.0.0", reload=True, port=8000)
     # loop = asyncio.get_event_loop()
     # loop.run_until_complete(main())
