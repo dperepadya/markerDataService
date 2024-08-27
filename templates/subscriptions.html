@@ -3,8 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+     <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
-
+    <h1>Active data streams</h1>
+    {% if not subscriptions %}
+        <p>No subscriptions found.</p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Exchange</th>
+                    <th>Symbol</th>
+                    <th>Is active</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in subscriptions %}
+                <tr>
+                    <td><a href="/subscriptions/{{ row.id }}/">{{ row.id }}</a></td>
+                    <td>{{row.name}}</td>
+                    <td>{{row.type}}</td>
+                    <td>{{row.exchange.name}}</td>
+                    <td>{{row.symbol.name}}</td>
+                    <td>{{row.is_active}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table><br>
+    {% endif %}
+    <a href="/subscriptions/add/"><button>Add subscription</button></a><br>
+    <a href="/subscriptions/unsubscribe/"><button>Stop all subscriptions</button></a><br>
+    <a href="/exchanges/"><button>Exchanges</button></a>
 </body>
 </html>

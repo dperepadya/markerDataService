@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Exchange</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+    <form action="/subscriptions/select_symbol/" method="get">
+        <label for="exchange_id">Select Exchange:</label>
+        <select id="exchange_id" name="exchange_id" required>
+            {% for exchange in exchanges %}
+                <option value="{{ exchange.id }}">{{ exchange.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Next">
+    </form><br>
+    <a href="/subscriptions/"><button>Subscriptions</button></a>
+</body>
+</html>

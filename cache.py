@@ -3,16 +3,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import Exchange, Symbol
 
+# {exchange_name, exchange_id}
 exchanges_cache = {}
+# {{exchange_id , {symbol_name, symbol_id}}
 symbols_cache = {}
 
 async def load_caches(session: AsyncSession):
     # Load exchanges into cache
     exchanges = await session.execute(select(Exchange))
-    exchanges_cache.update({exchange.id: exchange for exchange in exchanges.scalars().all()})
+    exchanges_cache.update({exchange.name: exchange.id for exchange in exchanges.scalars().all()})
 
     # Load symbols into cache
     symbols = await session.execute(select(Symbol))
-    symbols_cache.update({symbol.id: symbol for symbol in symbols.scalars().all()})
+    for symbol in symbols.scalars().all():
+        if symbol.exchange_id not in symbols_cache:
+            symbols_cache[symbol.exchange_id] = {}
+        symbols_cache[symbol.exchange_id][symbol.name] = symbol.id
+
+    # symbols_cache.update({symbol.name: symbol.id for symbol in symbols.scalars().all()})
 
     print("Caches loaded successfully.")

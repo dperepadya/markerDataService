@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Subscription</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+    <h1>Subscription</h1>
+    <p><strong>ID:</strong> {{ subscription.id }}</p>
+    <p><strong>Name:</strong> {{ subscription.name }}</p>
+    <p><strong>Type:</strong> {{ subscription.type }}</p>
+    <p><strong>Exchange:</strong> {{ subscription.exchange.name }}</p>
+    <p><strong>Symbol:</strong> {{ subscription.symbol.name }}</p>
+    <p><strong>Ticker is Subscribed:</strong> {{ subscription.is_active }}</p><br>
+    <form action="/subscriptions/{{ subscription.id }}/subscribe/" method="post">
+    {% if subscription.is_active %}
+        <button>[-] Unsubscribe</button>
+    {% else %}
+        <button>[+] Subscribe</button>
+    {% endif %}
+    </form>
+
+    <form action="/subscriptions/{{ subscription.id }}/delete/" method="post">
+        <button type="submit">Delete</button>
+    </form><br>
+    <a href="/subscriptions/"><button>Back to Subscriptions</button></a>
+</body>
+</html>

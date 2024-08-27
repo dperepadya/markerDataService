@@ -2,6 +2,11 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+class SubscriptionForm(BaseModel):
+    name: str
+    type: str
+    symbol_id: int
+    exchange_id: int
 
 class ExchangeModel(BaseModel):
     id: int

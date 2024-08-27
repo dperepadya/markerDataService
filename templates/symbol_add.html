@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Symbol</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+    <h1>Add Symbol</h1>
+    <form action="/exchanges/{{exchange_id}}/symbols/add/" method="post">
+        <label for="symbol">Select Symbol:</label>
+        <select id="symbol" name="symbol_name" required>
+            {% for symbol in symbols %}
+                <option value="{{ symbol.name }}">{{ symbol.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="hidden" name="exchange_id" value="{{ exchange_id }}">
+        <input type="submit" value="Add Symbol">
+    </form>
+    <a href="/exchanges/{{exchange_id}}/"><button>Back to Exchange</button></a>
+</body>
+</html>

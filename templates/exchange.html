@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ exchange.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
     <h1>{{ exchange.name }}</h1>
+    <a href="/exchanges/{{exchange.id}}/symbols/"><button>Symbols</button></a><br>
     <form action="/exchanges/{{ exchange.id }}/delete/" method="post">
         <button type="submit">Delete</button>
-    </form>
-    <a href="/exchanges/">Back to Exchanges</a>
+    </form><br>
+    <a href="/exchanges/"><button>Back to Exchanges</button></a>
 </body>
 </html>

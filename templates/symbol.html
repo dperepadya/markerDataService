@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ symbol.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+    <h1>{{ symbol.name }}</h1>
+    <p><strong>ID:</strong> {{ symbol.id }}</p>
+    <p><strong>Exchange:</strong> {{ symbol.exchange.name }}</p>
+    <p><strong>Type:</strong> {{ symbol.type }}</p>
+    <p><strong>Description:</strong> {{ symbol.description }}</p>
+    <p><strong>Tick size:</strong> {{ symbol.tick_size }}</p>
+    <p><strong>Point value:</strong> {{ symbol.point_value }}</p>
+    <p><strong>Min Size:</strong> {{ symbol.min_size }}</p>
+    <p><strong>Max Size:</strong> {{ symbol.max_size }}</p>
+    <p><strong>Price Step:</strong> {{ symbol.step_size }}</p>
+
+    <form action="/exchanges/{{symbol.exchange_id}}/symbols/{{ symbol.id }}/delete/" method="post">
+        <button type="submit">Delete</button>
+    </form><br>
+    <a href="/exchanges/{{symbol.exchange_id}}/symbols/"><button>Back to Symbols</button></a>
+</body>
+</html>

@@ -14,7 +14,7 @@ class Exchange:
 
 class Exchange(Base):
     __tablename__ = 'exchanges'
-    id = Column(Integer, primary_key=True, unique=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     name = Column(String, nullable=False)
 
     symbol = relationship('Symbol', back_populates='exchange')
@@ -24,7 +24,7 @@ class Exchange(Base):
 
 class Symbol(Base):
     __tablename__ = 'symbols'
-    id = Column(Integer, primary_key=True, unique=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     exchange_id = Column(Integer, ForeignKey('exchanges.id'), nullable=False)
     name = Column(String, nullable=False)
     type = Column(String, nullable=False)
@@ -33,7 +33,7 @@ class Symbol(Base):
     point_value = Column(Float, nullable=False)
     min_size = Column(Float, nullable=False)
     max_size = Column(Float, nullable=False)
-    price_step = Column(Float, nullable=False)
+    step_size = Column(Float, nullable=False)
 
     exchange = relationship("Exchange", back_populates="symbol")
     subscriptions = relationship('Subscription', back_populates='symbol')
@@ -42,8 +42,10 @@ class Symbol(Base):
 
 class Subscription(Base):
     __tablename__ = 'subscriptions'
-    id = Column(Integer, primary_key=True, unique=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     name = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=False)
     exchange_id = Column(Integer, ForeignKey('exchanges.id'), nullable=False)
     symbol_id = Column(Integer, ForeignKey('symbols.id'), nullable=False)
 

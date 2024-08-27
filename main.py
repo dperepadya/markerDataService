@@ -2,17 +2,19 @@ import asyncio
 import os
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
-from controllers import exchange_controllers, symbol_controllers
+
+import cache
+from controllers import exchange_controllers, subscription_controllers
 
 import database
 from binance_client import BinanceClient
-from controllers import symbol_controllers
 from rabbitmq_client import RabbitMQClient
 from message_processor import BinanceMessageProcessor
-from subscription_manager import SubscriptionManager
+from api_data_manager import data_manager
 
 ASYNC_MODE = False
 
@@ -24,7 +26,7 @@ api_secret = os.getenv('BINANCE_API_SECRET')
 rmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
 rmq_port = os.getenv('RABBITMQ_PORT', 5672)
 
-subscription_manager = SubscriptionManager()
+# data_manager = APIDataManager()
 rabbitmq_client = RabbitMQClient(host=rmq_host, port=rmq_port)
 # await rabbitmq_client.connect()
 binance_client = BinanceClient(api_key=api_key, api_secret=api_secret)
@@ -33,34 +35,42 @@ binance_client.message_processor = BinanceMessageProcessor(queue_manager=rabbitm
 is_async_mode = os.environ.get('IS_ASYNC_MODE', 'True')
 
 app.include_router(exchange_controllers.router, prefix="/exchanges", tags=["exchanges"])
-app.include_router(symbol_controllers.router, prefix="/exchanges/{exchange_id}/symbols", tags=["symbols"])
+# app.include_router(symbol_controllers.router, prefix="/exchanges/{exchange_id}/symbols", tags=["symbols"])
+app.include_router(subscription_controllers.router, prefix="/subscriptions", tags=["subscriptions"])
 
 @app.on_event("startup")
 async def startup_event():
     print("Init DB")
     if is_async_mode:
-        # asyncio.run(await database.init_db_async())
+        await database.init_db_async()
         pass
     else:
         database.init_db()
-    # print("Starting Subscription Manager")
-    # await subscription_manager.add_exchange("binance", binance_client)
-    # print("Subscribed to Binance")
-    # await subscription_manager.subscribe("binance", "BTCUSDT", "trades")
-    # await subscription_manager.subscribe("binance", "BTCUSDT", "order_book")
 
-    # await asyncio.sleep(5)
-    #await subscription_manager.unsubscribe("binance", "BTCUSDT", "trades")
-    #await subscription_manager.unsubscribe("binance", "BTCUSDT", "order_book")
+    # Temporary hashtags storage
+    async with database.SessionFactory() as session:
+        await cache.load_caches(session)
+
+    print("Starting API Data Manager")
+    await data_manager.add_exchange("binance", binance_client)
+    print("Connected to Binance")
+    # symbols = await data_manager.get_symbols("binance")
+    # print("Spot Market Symbols:", symbols)
+    # await data_manager.subscribe("binance", "BTCUSDT", "trades")
+    # await data_manager.subscribe("binance", "BTCUSDT", "order_book")
+
+    await asyncio.sleep(5)
+    #await data_manager.unsubscribe("binance", "BTCUSDT", "trades")
+    #await data_manager.unsubscribe("binance", "BTCUSDT", "order_book")
     #await asyncio.sleep(5)
-    await subscription_manager.stop()
+    # await data_manager.stop()
     # await asyncio.sleep(5)
-    # await subscription_manager.subscribe("binance", "BTCUSDT", "trades")
-    # await subscription_manager.subscribe("binance", "BTCUSDT", "order_book")
+    # await data_manager.subscribe("binance", "BTCUSDT", "trades")
+    # await data_manager.subscribe("binance", "BTCUSDT", "order_book")
 
 @app.get('/')
 def landing():
-    return RedirectResponse('/exchanges/')
+    return RedirectResponse('/subscriptions/')
 
 # @app.get("/tickers")
 # async def read_tickers(db: AsyncSession = Depends(database.get_db)):
@@ -70,7 +80,8 @@ def landing():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await subscription_manager.stop()
+    async with database.SessionFactory() as session:
+        await data_manager.stop(session)
 
 # @app.websocket("/ws/")
 # async def websocket_endpoint(websocket: WebSocket):

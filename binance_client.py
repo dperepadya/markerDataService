@@ -9,7 +9,8 @@ from message_processor import MessageProcessor, BinanceMessageProcessor
 
 class ExchangeClient(ABC):
     def __init__(self, api_key: str, api_secret: str):
-        pass
+        # {name, ...}
+        self.symbols = []
 
     @abstractmethod
     async def init_client(self):
@@ -21,6 +22,10 @@ class ExchangeClient(ABC):
 
     @abstractmethod
     async def unsubscribe(self, symbol: str, channel: str):
+        pass
+
+    @abstractmethod
+    async def get_symbols(self):
         pass
 
 class BinanceClient(ExchangeClient):
@@ -38,13 +43,30 @@ class BinanceClient(ExchangeClient):
         self.depth = 5
         self.interval = 100
 
-    # def set_message_processor(self, processor: MessageProcessor, queue_manager):
-    #     self.message_processor = processor
-    #     self.message_processor.queue_manager = queue_manager
+    async def get_symbols(self):
+        if self.client is None:
+            await self.init_client()
+        exchange_info = await self.client.get_exchange_info()
+        # usdt_futures_info = self.client.get_symbols_future()
+        # options_info = self.client.options_info()
+        symbols_info = []
+        for symbol in exchange_info['symbols']:
+            symbol_data = {
+                'name': symbol['symbol'],
+                'type': 's',
+                'point_value': 1.0,
+                'tick_size': float(symbol['filters'][0]['tickSize']),
+                'min_size': float(symbol['filters'][1]['minQty']),
+                'max_size': float(symbol['filters'][1]['maxQty']),
+                'step_size': float(symbol['filters'][1]['stepSize'])
+            }
+            symbols_info.append(symbol_data)
+        return symbols_info
 
     async def init_client(self):
         self.client = await AsyncClient.create(self.api_key, self.api_secret)
         self.bm = BinanceSocketManager(self.client)
+        self.symbols = await self.get_symbols()
 
     async def subscribe(self, symbol, channel):
         if symbol is None or channel is None:
@@ -61,7 +83,7 @@ class BinanceClient(ExchangeClient):
     async def unsubscribe(self, symbol=None, channel=None):
         if self.client is None or not self.is_running:
             return True
-        keys_to_remove = []
+        # keys_to_remove = []
 
         if channel is None:
             if symbol is None:

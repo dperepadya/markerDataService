@@ -18,13 +18,9 @@ Base = declarative_base()
 
 is_async_mode = os.environ.get('IS_ASYNC_MODE', 'True')
 if is_async_mode:
-    # db_url = f"postgresql+asyncpg://{db_user}:{db_pass}@localhost:{db_port}/{db_name}"
-    db_url = "postgresql+asyncpg://postgres:qwerty123@localhost:5432/market_data"
-    print(db_url)
+    db_url = f"postgresql+asyncpg://{db_user}:{db_pass}@localhost:{db_port}/{db_name}"
+    # db_url = "postgresql+asyncpg://postgres:qwerty123@localhost:5432/market_data"
     engine = create_async_engine(db_url, echo=True)
-
-    # async_session = AsyncSession(engine, expire_on_commit=False, autoflush=False, autocommit=False,
-    #                                     expire_on_commit=False)
     SessionFactory = async_sessionmaker(bind=engine, autoflush=False, autocommit=False,
                                         expire_on_commit=False)
 else:
@@ -38,19 +34,19 @@ else:
 
 # SYNC SETUP FOR ALEMBIC
 def init_db():
-    # Base.metadata.create_all(bind=engine)
-    return
+    Base.metadata.create_all(bind=engine)
 
 async def init_db_async():
     async with engine.begin() as conn:
         # Create tables
         await conn.run_sync(Base.metadata.create_all)
-    await engine.dispose()
+
+    # await engine.dispose()
 
 async def get_db() -> AsyncSession:
     async with SessionFactory() as session:
         try:
-            print(f"ASYNC Pool: {engine.pool.status()}")
+            # print(f"ASYNC Pool: {engine.pool.status()}")
             yield session
         except Exception as e:
             await session.rollback()
