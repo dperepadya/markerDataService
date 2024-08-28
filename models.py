@@ -54,7 +54,7 @@ class Subscription(Base):
 
 class Ticker(Base):
     __tablename__ = 'tickers'
-    id = Column(Integer, unique=True, nullable=False)  # t
+    id = Column(Text, unique=True, nullable=False)  # t
     timestamp = Column(TIMESTAMP(timezone=True), nullable=False)  # T
     instrument = Column(Text, nullable=False)  # s
     # symbol = Column(Text, nullable=False)  # split
@@ -68,14 +68,14 @@ class Ticker(Base):
     side = Column(Boolean, nullable=False)  # m - market maker flag
     direction = Column(Boolean, nullable=False)  # M - match type flag
     __table_args__ = (
-        PrimaryKeyConstraint('timestamp', 'exchange_id', 'instrument', name='tickers_pkey'),
+        PrimaryKeyConstraint('timestamp', 'exchange_id', 'instrument', 'id', name='tickers_pkey'),
     )
     exchange = relationship("Exchange", back_populates="tickers")
     symbol = relationship("Symbol", back_populates="tickers")
 
 class OrderBook(Base):
     __tablename__ = 'market_depth'
-    id = Column(Integer, unique=True, nullable=False)  # t
+    id = Column(Text, unique=True, nullable=False)  # t
     timestamp = Column(TIMESTAMP(timezone=True), nullable=False)
     exchange_id = Column(Integer, ForeignKey('exchanges.id'), nullable=False)
     symbol_id = Column(Integer, ForeignKey('symbols.id'), index=True)
@@ -89,7 +89,7 @@ class OrderBook(Base):
     bids = Column(JSONB, nullable=False)
     asks = Column(JSONB, nullable=False)
     __table_args__ = (
-        PrimaryKeyConstraint('timestamp', 'exchange_id', 'instrument', name='market_depth_pkey'),
+        PrimaryKeyConstraint('timestamp', 'exchange_id', 'instrument', 'id', name='market_depth_pkey'),
     )
     exchange = relationship("Exchange", back_populates="market_depth")
     symbol = relationship("Symbol", back_populates="market_depth")

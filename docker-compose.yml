@@ -1,39 +1,40 @@
 version: '3.7'
 
 services:
-  app:
-    build: .
+#  app:
+#    build: .
+#    ports:
+#      - "8000:8000"
+#    depends_on:
+#      - timescaledb
+#      - rabbitmq
+#    environment:
+#      - BINANCE_API_KEY=${BINANCE_API_KEY}
+#      - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+#      - DATABASE_URL=${DATABASE_URL}
+#      - RABBITMQ_HOST=${RABBITMQ_HOST}
+#      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE}
+#
+#  timescaledb:
+#    image: timescale/timescaledb-postgis:latest-pg14
+#    environment:
+#      POSTGRES_USER: user
+#      POSTGRES_PASSWORD: password
+#      POSTGRES_DB: market_data
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - timescale_data:/var/lib/postgresql/data
+  rabbit_mq:
+    image: rabbitmq:3-management
     ports:
-      - "8000:8000"
-    depends_on:
-      - timescaledb
-      - rabbitmq
+      - 15672:15672
+      - 5672:5672
     environment:
-      - BINANCE_API_KEY=${BINANCE_API_KEY}
-      - BINANCE_API_SECRET=${BINANCE_API_SECRET}
-      - DATABASE_URL=${DATABASE_URL}
-      - RABBITMQ_HOST=${RABBITMQ_HOST}
-      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE}
-
-  timescaledb:
-    image: timescale/timescaledb-postgis:latest-pg14
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: market_data
-    ports:
-      - "5432:5432"
-    volumes:
-      - timescale_data:/var/lib/postgresql/data
-
-  rabbitmq:
-      image: rabbitmq:3-management
-      ports:
-        - "5672:5672"
-        - "15672:15672"
-
-  secrets:
-    binance_api_key:
-      external: true
-    binance_api_secret:
-      external: true
+#      - RABBITMQ_HOST=localhost
+#      - RABBITMQ_PORT=5672
+#  secrets:
+#    binance_api_key:
+#      external: true
+#    binance_api_secret:
+#      external: true

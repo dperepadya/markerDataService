@@ -67,7 +67,7 @@ def upgrade() -> None:
                     sa.ForeignKeyConstraint(['exchange_id'], ['exchanges.id'], ),
                     sa.ForeignKeyConstraint(['symbol_id'], ['symbols.id'], ),
                     # sa.PrimaryKeyConstraint('timestamp', 'symbol', name='tickers_pkey')
-                    sa.PrimaryKeyConstraint('timestamp', 'exchange_id', 'instrument', name='tickers_pkey')
+                    sa.PrimaryKeyConstraint('timestamp', 'exchange_id', 'instrument', 'id', name='tickers_pkey')
                     )
     op.create_index('tickers_timestamp_idx', 'tickers', [sa.text('timestamp DESC')], unique=False)
 
@@ -85,7 +85,7 @@ def upgrade() -> None:
                     sa.Column('asks', sa.JSON(), nullable=False),
                     sa.ForeignKeyConstraint(['exchange_id'], ['exchanges.id'], ),
                     sa.ForeignKeyConstraint(['symbol_id'], ['symbols.id'], ),
-                    sa.PrimaryKeyConstraint('timestamp', 'exchange_id', 'instrument', name='market_depth_pkey')
+                    sa.PrimaryKeyConstraint('timestamp', 'exchange_id', 'instrument', 'id', name='market_depth_pkey')
                     )
     op.create_index('market_depth_timestamp_idx', 'market_depth', [sa.text('timestamp DESC')], unique=False)
 

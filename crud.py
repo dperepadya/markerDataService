@@ -1,3 +1,5 @@
+import logging
+import uuid
 from datetime import datetime
 from typing import cast
 
@@ -6,10 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from cache import exchanges_cache, symbols_cache
-from database import get_db
 from models import Ticker, OrderBook, Exchange, Symbol, Subscription
 from utils.parsers import SymbolParser
 
+logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
 
 async def get_exchanges(db: AsyncSession):
     res = await db.execute(select(Exchange))
@@ -99,11 +101,14 @@ async def delete_exchange_symbol(db: AsyncSession, exchange_id: int, symbol_id: 
         return True
 
 
-async def get_cache_id(cache, name: str):
-    if name not in cache:
-        return None
-    return cache[name]
+async def get_exchange_cache_id(cache, name: str):
+    return cache.get(name, None)
 
+async def get_symbol_cache_id(cache, exchange_id: int, name: str):
+    cache_ = cache.get(exchange_id, None)
+    if cache_ is None or name is None:
+        return None
+    return cache_.get(name, None)
 
 async def get_subscriptions(db: AsyncSession):
     res = await db.execute(select(Subscription)
@@ -169,12 +174,13 @@ async def add_ticker(db: AsyncSession, ticker_data):
     instrument = ticker_data['symbol']
     instrument_info = SymbolParser.parse(instrument)
     symbol_name = instrument_info['symbol']
-    symbol_id = await get_cache_id(symbols_cache, symbol_name)
-    exchange_id = await get_cache_id(exchanges_cache, ticker_data['sender'])
-    strike = instrument_info['strike']
-    expiry = instrument_info['expiry']
-    option_type = instrument_info['option_type']
+    exchange_id = await get_exchange_cache_id(exchanges_cache, ticker_data['sender'])
+    symbol_id = await get_symbol_cache_id(symbols_cache, exchange_id, symbol_name)
+    strike = instrument_info.get('strike', None)
+    expiry = instrument_info.get('expiry', None)
+    option_type = instrument_info.get('option_type', None)
     ticker = Ticker(
+        id=uuid.uuid4().hex,
         timestamp=datetime.utcfromtimestamp(ticker_data['timestamp'] / 1000),
         instrument=instrument,
         exchange_id=exchange_id,

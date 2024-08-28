@@ -4,26 +4,78 @@
     <meta charset="UTF-8">
     <title>Subscription</title>
     <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+        }
+        .subscription-info {
+            flex: 1;
+            margin-right: 20px;
+        }
+        .subscription-info p, .subscription-info form {
+            margin: 10px 0;
+        }
+        .trade-updates {
+            flex: 1;
+            max-height: 700px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+            margin-left: -800px;
+            margin-top: 100px;
+        }
+        .trade-updates p {
+            margin: 5px 0;
+            padding: 5px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Subscription</h1>
-    <p><strong>ID:</strong> {{ subscription.id }}</p>
-    <p><strong>Name:</strong> {{ subscription.name }}</p>
-    <p><strong>Type:</strong> {{ subscription.type }}</p>
-    <p><strong>Exchange:</strong> {{ subscription.exchange.name }}</p>
-    <p><strong>Symbol:</strong> {{ subscription.symbol.name }}</p>
-    <p><strong>Ticker is Subscribed:</strong> {{ subscription.is_active }}</p><br>
-    <form action="/subscriptions/{{ subscription.id }}/subscribe/" method="post">
-    {% if subscription.is_active %}
-        <button>[-] Unsubscribe</button>
-    {% else %}
-        <button>[+] Subscribe</button>
-    {% endif %}
-    </form>
+    <div class="subscription-info">
+        <h1>Subscription</h1>
+        <p><strong>ID:</strong> {{ subscription.id }}</p>
+        <p><strong>Name:</strong> {{ subscription.name }}</p>
+        <p><strong>Type:</strong> {{ subscription.type }}</p>
+        <p><strong>Exchange:</strong> {{ subscription.exchange.name }}</p>
+        <p><strong>Symbol:</strong> {{ subscription.symbol.name }}</p>
+        <p><strong>Ticker is Subscribed:</strong> {{ subscription.is_active }}</p><br>
+        <form action="/subscriptions/{{ subscription.id }}/subscribe/" method="post">
+        {% if subscription.is_active %}
+            <button>[-] Unsubscribe</button>
+        {% else %}
+            <button>[+] Subscribe</button>
+        {% endif %}
+        </form>
 
-    <form action="/subscriptions/{{ subscription.id }}/delete/" method="post">
-        <button type="submit">Delete</button>
-    </form><br>
-    <a href="/subscriptions/"><button>Back to Subscriptions</button></a>
+        <form action="/subscriptions/{{ subscription.id }}/delete/" method="post">
+            <button type="submit">Delete</button>
+        </form><br>
+        <a href="/subscriptions/"><button>Back to Subscriptions</button></a>
+    </div>
+
+    <div class="trade-updates" id="trade-updates">
+        <h2>Live Trade Updates</h2>
+    </div>
+
+    <script>
+        const tradeUpdatesDiv = document.getElementById("trade-updates");
+        const symbol = "{{ subscription.symbol.name }}";
+        const ws = new WebSocket(`ws://127.0.0.1:8000/ws/trades/?symbol=${symbol}`);
+        ws.onmessage = function(event) {
+            const trade = JSON.parse(event.data);
+            const tradeElement = document.createElement("p");
+            tradeElement.textContent = `${trade.timestamp} ${trade.sender} ${trade.symbol} price: ${trade.price} volume: ${trade.volume}`;
+            tradeUpdatesDiv.appendChild(tradeElement);
+        };
+
+        ws.onclose = function(event) {
+            console.error("WebSocket closed: ", event);
+        };
+    </script>
 </body>
 </html>

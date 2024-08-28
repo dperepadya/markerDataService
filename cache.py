@@ -1,7 +1,11 @@
+import logging
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import Exchange, Symbol
+
+logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
 
 # {exchange_name, exchange_id}
 exchanges_cache = {}

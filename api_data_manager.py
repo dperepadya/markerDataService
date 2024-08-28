@@ -1,9 +1,11 @@
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
-
 import cache
 import crud
 from binance_client import ExchangeClient
 
+logging.basicConfig(level=logging.INFO)
+logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
 
 class APIDataManager:
     def __init__(self):
@@ -58,7 +60,7 @@ class APIDataManager:
             raise ValueError(f"Exchange {exchange} API provider is not assigned")
         await provider.subscribe(symbol, channel)
 
-    async def unsubscribe(self, exchange, symbol=None, channel=None):
+    async def unsubscribe(self, exchange, symbol=None, channel=None, stop=False):
         if exchange not in self.exchanges_providers:
             raise ValueError(f"Exchange {exchange} is not registered")
         provider = self.exchanges_providers[exchange]
@@ -69,8 +71,11 @@ class APIDataManager:
     async def unsubscribe_all(self, session: AsyncSession):
         subscriptions = await crud.get_subscriptions(session)
         for subscription in subscriptions:
-            await self.unsubscribe(subscription.exchange.name, subscription.symbol.name, subscription.type)
-            await crud.update_status(session, subscription, False)
+            if subscription.is_active:
+                await self.unsubscribe(subscription.exchange.name, subscription.symbol.name, subscription.type)
+                await crud.update_status(session, subscription, False)
+                logging.info(f'Subscription for {subscription.exchange.name} {subscription.symbol.name} {subscription.type}'
+                             f' has been stopped')
 
     def start(self):
         for exchange in self.exchanges_providers.values():

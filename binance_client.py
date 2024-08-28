@@ -1,5 +1,7 @@
+import logging
 import os
 import asyncio
+import traceback
 from abc import abstractmethod, ABC
 
 # from binance.websocket.um_futures.websocket_client import UMFuturesWebsocketClient
@@ -76,6 +78,7 @@ class BinanceClient(ExchangeClient):
         key = (symbol, channel)
         if key in self.stream_tasks:
             return True
+        logging.info(f"Create new task for {symbol} {channel}")
         task = asyncio.create_task(self.start_listener(symbol, channel))
         self.stream_tasks[key] = task
         return True
@@ -134,17 +137,29 @@ class BinanceClient(ExchangeClient):
         else:
             raise ValueError("Unsupported channel")
 
-        async with socket as stream:
+        # buffer = []
+        while self.is_running:
             try:
-                while self.is_running:
-                    msg = await stream.recv()
-                    # print(msg)
-                    await self.message_processor.process_message(msg, self.name)
+                async with socket as stream:
+                    while self.is_running:
+                        if stream._queue.qsize() < 100:
+                            msg = await asyncio.wait_for(stream.recv(), 60)
+                        else:
+                            await asyncio.sleep(1)
+                        if not self.is_running:
+                            break
+                        print(msg)
+                        await self.message_processor.process_message(msg, self.name)
+                        await asyncio.sleep(1)
             except asyncio.CancelledError:
-                print(f'Task {self.name} {symbol} {channel} cancelled')
-                return
+                # print(f'Task {self.name} {symbol} {channel} cancelled')
+                # traceback.print_exc()
+                await asyncio.sleep(3)
             except Exception as e:
                 print(f'Unexpected error: {e}')
+                self.is_running = False
+                return
             finally:
                 print(f'Task {self.name} {symbol} {channel} stopped')
+
 

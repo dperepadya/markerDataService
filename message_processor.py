@@ -4,10 +4,6 @@ import json
 class MessageProcessor:
     def __init__(self, queue_manager):
         self.queue_manager = queue_manager
-        # self.channels = {}
-
-    # def set_channels(self, channels):
-         # self.channels = channels
 
     async def process_message(self, message, sender):
         raise NotImplementedError("Subclasses must implement")
@@ -21,15 +17,19 @@ class BinanceMessageProcessor(MessageProcessor):
         super().__init__(queue_manager)
 
     async def publish_message(self, data, channel, sender):
-        queue = sender + '_' + channel
-        await self.queue_manager.publish(json.dumps(data), queue)
+        try:
+            queue = sender + '_' + channel
+            # print(queue, json.dumps(data))
+            await self.queue_manager.publish(json.dumps(data), queue)
+        except Exception as e:
+            print(f"Unexpected error: {e}")
 
     def parse_trade_message(self, msg):
         return {
             'timestamp': msg['T'],
             'symbol': msg['s'],
-            'price': msg['p'],
-            'volume': msg['q'],
+            'price': float(msg['p']),
+            'volume': float(msg['q']),
             'side': msg['m'],
             'direction': msg['M']
         }
@@ -45,27 +45,22 @@ class BinanceMessageProcessor(MessageProcessor):
         }
 
     async def process_message(self, msg, sender):
-        if sender is None:
-            return None
-        data = None
-        channel = None
-        if msg['e'] == 'trade':
-            channel = msg['e']
-            data = self.parse_trade_message(msg)
+        try:
+            if sender is None:
+                return None
+            data = None
+            channel = None
+            if msg['e'] == 'trade':
+                channel = 'trades'
+                data = self.parse_trade_message(msg)
 
-        elif msg['e'] == 'depthUpdate':
-            channel = msg['e']
-            data = self.parse_order_book_message(msg)
-        if data is not None:
-            # await self.publish_message(data, channel, sender)
-            data['sender'] = sender
-            print(data)
+            elif msg['e'] == 'depthUpdate':
+                channel = 'order_book'
+                data = self.parse_order_book_message(msg)
+            if data is not None:
+                data['sender'] = sender
+                # print(data)
+                await self.publish_message(data, channel, sender)
+        except Exception as e:
+            print(f"Unexpected error: {e}")
 
-
-# # Example usage
-# rabbitmq_client = RabbitMQClient("amqp://guest:guest@localhost/")
-# await rabbitmq_client.connect()
-# processor = MessageProcessor(rabbitmq_client)
-#
-# # Assuming msg is the message you received from Binance
-# await processor.process_message(msg)

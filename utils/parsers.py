@@ -1,13 +1,13 @@
 
 class SymbolParser:
-    def __init__(self, symbol: str):
-        self.symbol = symbol
+    def __init__(self):
+        pass
 
     @staticmethod
-    def parse(self) -> dict:
-        if '_' in self.symbol:
+    def parse(symbol: str) -> dict:
+        if '_' in symbol:
             # Futures format: BASEQUOTE_EXPIRY
-            base_quote, expiry = self.symbol.split('_')
+            base_quote, expiry = symbol.split('_')
             instr_type = 'f'
             return {
                 'instr_type': instr_type,
@@ -15,9 +15,9 @@ class SymbolParser:
                 'expiry': expiry
             }
         # ETH-220930-1500-C
-        elif '-' in self.symbol:
+        elif '-' in symbol:
             # Options format: BASE-EXPIRY-STRIKE-TYPE
-            parts = self.symbol.split('-')
+            parts = symbol.split('-')
             if len(parts) == 4:
                 instr_type = 'o'
                 return {
@@ -32,7 +32,7 @@ class SymbolParser:
             instr_type = 's'
             return {
                 'instr_type': instr_type,
-                'symbol': self.symbol
+                'symbol': symbol
             }
 
         # If format is unknown

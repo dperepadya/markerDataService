@@ -1,3 +1,4 @@
+import logging
 import os
 
 import os
@@ -8,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from sqlalchemy.orm import sessionmaker
+logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
 
 db_user = os.environ.get('DATABASE_UN', 'postgres')
 db_pass = os.environ.get('DATABASE_PWD', 'qwerty123')
