@@ -87,7 +87,6 @@ class BinanceClient(ExchangeClient):
         if self.client is None or not self.is_running:
             return True
         # keys_to_remove = []
-
         if channel is None:
             if symbol is None:
                 # unsubscribe from all
@@ -161,5 +160,6 @@ class BinanceClient(ExchangeClient):
                 return
             finally:
                 print(f'Task {self.name} {symbol} {channel} stopped')
-
+                return
+        print(f'Listener loop {self.name} {symbol} {channel} stopped')
 

@@ -57,7 +57,6 @@ async def startup_event():
     else:
         database.init_db()
     logging.info("Init RabbitMQ")
-    #await rabbitmq_client.connect()
     await rabbitmq_client.run_db_worker('trades', 'binance')
 
     # Temporary hashtags storage
@@ -72,23 +71,12 @@ async def startup_event():
     # await data_manager.subscribe("binance", "BTCUSDT", "trades")
     # await asyncio.sleep(3)
     # await data_manager.subscribe("binance", "ETHUSDT", "trades")
-    # await data_manager.subscribe("binance", "BTCUSDT", "order_book")
-
     # await asyncio.sleep(5)
     # await data_manager.unsubscribe("binance", "BTCUSDT", "trades")
-    # await data_manager.unsubscribe("binance", "BTCUSDT", "order_book")
-    await asyncio.sleep(5)
-    async with database.SessionFactory() as session:
-        await data_manager.stop(session)
-
-    # await asyncio.sleep(5)
-    # await data_manager.subscribe("binance", "BTCUSDT", "trades")
-    # await data_manager.subscribe("binance", "BTCUSDT", "order_book")
 
 @app.get('/')
 def landing():
     return RedirectResponse('/subscriptions/')
-
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -99,41 +87,8 @@ async def shutdown_event():
     binance_client.is_running = False
     logging.info("API Data Manager has been shut down")
 
-# @app.websocket("/ws/")
-# async def websocket_endpoint(websocket: WebSocket):
-#     await manager.connect(websocket)
-#     try:
-#         while True:
-#             data = await websocket.receive_json()
-#             action = data.get("action")
-#             symbol = data.get("symbol")
-#             if action == "subscribe":
-#                 await manager.handle_subscription(websocket, symbol)
-#             elif action == "unsubscribe":
-#                 await manager.handle_unsubscription(websocket, symbol)
-#     except:
-#         manager.disconnect(websocket)
-#
-#
-# @app.post("/start_stream/")
-# async def start_stream():
-#     if binance_client.is_streaming:
-#         raise HTTPException(status_code=400, detail="Stream already started")
-#     await binance_client.start_stream()
-#     return {"message": "Stream started"}
-#
-#
-# @app.post("/stop_stream/")
-# async def stop_stream():
-#     if not binance_client.is_streaming:
-#         raise HTTPException(status_code=400, detail="Stream not started")
-#     await binance_client.stop_stream()
-#     return {"message": "Stream stopped"}
 async def main() -> None:
     pass
 
 if __name__ == "__main__":
     asyncio.run(main())
-    # uvicorn.run("main:app", host="0.0.0.0", reload=True, port=8000)
-    # loop = asyncio.get_event_loop()
-    # loop.run_until_complete(main())

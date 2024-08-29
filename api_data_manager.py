@@ -16,10 +16,6 @@ class APIDataManager:
 
     def get_exchange_symbols(self, exchange_id):
         exchange_name = next((name for name, id_ in cache.exchanges_cache.items() if id_ == exchange_id), None)
-        # print(cache.exchanges_cache)
-        # print(exchange_id)
-        # print(type(exchange_id))
-        # print(exchange_name)
         if exchange_name is None or exchange_name not in self.exchanges_providers:
             raise ValueError(f"Exchange with Id {exchange_id} is not registered")
         print(exchange_name)

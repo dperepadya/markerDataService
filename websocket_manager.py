@@ -21,11 +21,10 @@ class WebSocketManager:
                     del self.active_connections[symbol]
                 break
 
-    async def broadcast(self, trade: dict):
-        symbol = trade["symbol"]
+    async def broadcast(self, msg: dict):
+        symbol = msg["symbol"]
         if symbol in self.active_connections:
             for websocket in self.active_connections[symbol]:
-                await websocket.send_text(json.dumps(trade))
-
+                await websocket.send_text(json.dumps(msg))
 
 websocket_manager = WebSocketManager()

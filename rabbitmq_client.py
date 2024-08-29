@@ -2,9 +2,8 @@ import asyncio
 import logging
 import os
 import traceback
-from functools import partial
 
-from aio_pika import DeliveryMode, Message, connect, exceptions, connect_robust
+from aio_pika import Message, connect_robust
 import json
 
 from aio_pika.abc import AbstractIncomingMessage, DeliveryMode
@@ -20,8 +19,8 @@ class RabbitMQClient:
     def __init__(self, host=os.getenv('RABBITMQ_HOST', 'localhost'), port=int(os.getenv('RABBITMQ_PORT', 5672))):
         self.host = host
         self.port = port
-        # self.url = f'amqp://guest:guest@{host}:{port}/'
-        self.url = 'amqp://guest:guest@localhost:5672/'
+        self.url = f'amqp://guest:guest@{host}:{port}/'
+        # self.url = 'amqp://guest:guest@localhost:5672/'
         self.publisher_connection = None
         self.consumer_connection = None
         self.channels = {}
@@ -36,12 +35,6 @@ class RabbitMQClient:
         if self.consumer_connection is None or self.consumer_connection.is_closed:
             self.consumer_connection = await connect_robust(self.url)
         return self.consumer_connection
-
-    # async def get_channel(self, queue_name: str):
-    #     if queue_name not in self.channels:
-    #         self.channels[queue_name] = await self.connection.channel()
-    #         # await self.channels[queue_name].declare_queue(queue_name)
-    #     return self.channels[queue_name]
 
     async def publish(self, message, queue_name: str):
         try:
@@ -58,28 +51,15 @@ class RabbitMQClient:
             logging.error('Publish error: %s', e)
             traceback.print_exc()
             return
-        finally:
-            await self.publisher_connection.close()
-
-    # async def consume(self, queue_name: str, callback):
-    #     try:
-    #         # channel = await self.get_channel(queue_name)
-    #         if self.connection is None or self.connection.is_closed:
-    #             await self.connect()
-    #         channel = await self.connection.channel()
-    #         await channel.set_qos(prefetch_count=10)
-    #         queue = await channel.declare_queue(queue_name, durable=True)  # , auto_delete=False)
-    #         await queue.consume(lambda message: callback(message, channel))
-    #         await asyncio.Future()
-    #     except Exception as e:
-    #         logging.error('Consume error: %s', e)
+        # finally:
+        #     await self.publisher_connection.close()
 
     async def run_db_worker(self, channel: str, sender: str):
         queue_name = f'{sender}_{channel}'
         if queue_name in self.workers:
             return
         logging.info(f'Starting worker {queue_name}')
-        # await self.db_worker(channel, sender)
+
         async with SessionFactory() as session:
             task = asyncio.create_task(self.db_worker(channel, sender, session))
             self.workers[queue_name] = task
@@ -95,28 +75,20 @@ class RabbitMQClient:
         logging.info(f'Running worker {queue_name}')
         channel_obj = await connection.channel()
         await channel_obj.set_qos(prefetch_count=1)
-        # try:
-        #     queue = await channel_obj.declare_queue(queue_name, passive=True)  #, , durable=True passive=True, auto_delete=False)
-        # except exceptions.ChannelClosed:
-        #     logging.info(f'Queue {queue_name} does not exist, creating it as durable.')
+
         queue = await channel_obj.declare_queue(queue_name, durable=False, auto_delete=False)
         await queue.purge()
         logging.info(f'Starting {channel} Channel consumer')
-        # async with SessionFactory() as session:
         try:
             if channel == 'trades':
                 await queue.consume(lambda message: self.process_trade_message(message, session))
-                # await queue.consume(self.process_trade_message)
             elif channel == 'order_book':
-                # await queue.consume(lambda message: self.process_dom_message(message, session))
-                x = 1
+                await queue.consume(lambda message: self.process_dom_message(message, session))
             else:
                 logging.info("There is no channels to be handled")
                 return
             logging.info(f'Waiting for messages {queue_name}')
-
             await asyncio.Future()
-            # x = 1
         except Exception as e:
             logging.error(f'Error: {e}')
         finally:
@@ -128,23 +100,28 @@ class RabbitMQClient:
             data_dict = json.loads(message.body.decode('utf-8'))
             data_dict = json.loads(data_dict)
             logging.info(f'try to save{data_dict}')
-            # await add_ticker(session, data_dict)
+            await add_ticker(session, data_dict)
             await websocket_manager.broadcast(data_dict)
 
     async def process_dom_message(self, message: AbstractIncomingMessage, session):
         # await add_dom(session, trade_data)
         pass
 
-    # async def consume(self, queue, callback: Callable):
-    #     if not self.connection:
-    #         await self.connect()
-    #     channel = await self.get_channel(queue)
-    #     if not channel:
-    #         return False
-    #     queue = await channel.declare_queue(queue)
-    #     async with queue.iterator() as queue_iter:
-    #         async for message in queue_iter:
-    #             async with message.process():
-    #                 message_data = json.loads(message.body.decode('utf-8'))
-    #                 # Run the callback function in a separate task
-    #                 asyncio.create_task(callback(message_data))
+# async def get_channel(self, queue_name: str):
+#     if queue_name not in self.channels:
+#         self.channels[queue_name] = await self.connection.channel()
+#         # await self.channels[queue_name].declare_queue(queue_name)
+#     return self.channels[queue_name]
+
+# async def consume(self, queue_name: str, callback):
+#     try:
+#         # channel = await self.get_channel(queue_name)
+#         if self.connection is None or self.connection.is_closed:
+#             await self.connect()
+#         channel = await self.connection.channel()
+#         await channel.set_qos(prefetch_count=10)
+#         queue = await channel.declare_queue(queue_name, durable=True)  # , auto_delete=False)
+#         await queue.consume(lambda message: callback(message, channel))
+#         await asyncio.Future()
+#     except Exception as e:
+#         logging.error('Consume error: %s', e)
