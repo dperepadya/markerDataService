@@ -1,15 +1,13 @@
-import logging
 import uuid
-from datetime import datetime
+import logging
 from typing import cast
-
+from datetime import datetime
+from utils.parsers import SymbolParser
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
 from cache import exchanges_cache, symbols_cache
 from models import Ticker, OrderBook, Exchange, Symbol, Subscription
-from utils.parsers import SymbolParser
 
 logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
 
@@ -18,12 +16,10 @@ async def get_exchanges(db: AsyncSession):
     exchanges = res.scalars().all()
     return exchanges
 
-
 async def get_exchange_by_id(db: AsyncSession, exchange_id: int):
     res = await db.execute(select(Exchange).filter(exchange_id == Exchange.id))
     exchange = res.scalars().first()
     return exchange
-
 
 async def add_exchange(db: AsyncSession, exchange_data):
     if exchange_data is None:
@@ -37,7 +33,6 @@ async def add_exchange(db: AsyncSession, exchange_data):
     exchanges_cache[exchange.name] = exchange.id
     return True
 
-
 async def delete_exchange(db: AsyncSession, exchange_id: int):
     exchange = await get_exchange_by_id(db, exchange_id)
     if exchange is not None:
@@ -47,7 +42,6 @@ async def delete_exchange(db: AsyncSession, exchange_id: int):
         exchanges_cache.pop(exchange.id, None)
         return True
     return False
-
 
 async def add_exchange_symbol(db: AsyncSession, symbol_data):
     symbol = Symbol(
@@ -69,18 +63,13 @@ async def add_exchange_symbol(db: AsyncSession, symbol_data):
     print('updated symbols cache', symbols_cache)
     return True
 
-
 async def get_exchange_symbols(db: AsyncSession, exchange_id: int):
     res = await db.execute(select(Symbol)
                            .options(selectinload(Symbol.exchange))  # .where(Symbol.exchange_id == exchange_id)
                            .where(cast("ColumnElement[bool]", Symbol.exchange_id == exchange_id))
                            )
-    # if res is None:
-    #     return None
-    scalars = res.scalars()
     symbols = res.scalars().all()
     return symbols
-
 
 async def get_exchange_symbol_by_id(db: AsyncSession, exchange_id: int, symbol_id: int):
     res = await db.execute(select(Symbol)
@@ -88,7 +77,6 @@ async def get_exchange_symbol_by_id(db: AsyncSession, exchange_id: int, symbol_i
                            .where(exchange_id == Symbol.exchange_id, symbol_id == Symbol.id))
     symbol = res.scalars().first()
     return symbol
-
 
 async def delete_exchange_symbol(db: AsyncSession, exchange_id: int, symbol_id: int):
     symbol = await get_exchange_symbol_by_id(db, exchange_id, symbol_id)
@@ -99,7 +87,6 @@ async def delete_exchange_symbol(db: AsyncSession, exchange_id: int, symbol_id: 
         symbols_cache[exchange_id].pop(symbol.id, None)
         print('updated symbols cache', symbols_cache)
         return True
-
 
 async def get_exchange_cache_id(cache, name: str):
     return cache.get(name, None)
@@ -123,7 +110,6 @@ async def get_subscription_by_id(db: AsyncSession, subscription_id: int):
                            .where(subscription_id == Subscription.id))
     subscription = res.scalars().first()
     return subscription
-
 
 async def add_subscription(db: AsyncSession, subscription_data):
     if subscription_data is None:
@@ -164,11 +150,16 @@ async def delete_subscription(db: AsyncSession, subscription_id: int):
     await db.refresh(subscription)
     return True
 
+async def get_tickers(db: AsyncSession):
+    result = await db.execute(select(Ticker))
+    res = result.scalars().all()
+    return res
 
-# async def get_tickers(session: AsyncSession):
-#     result = await session.execute(select(models.Ticker))
-#     return result.scalars().all()
-#
+async def get_ticker_by_id(db: AsyncSession, ticker_id: int):
+    res = await db.execute(select(Ticker).filter(ticker_id == Ticker.id))
+    ticker = res.scalars().first()
+    return ticker
+
 
 async def add_ticker(db: AsyncSession, ticker_data):
     instrument = ticker_data['symbol']

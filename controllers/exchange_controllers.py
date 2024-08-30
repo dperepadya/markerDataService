@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Depends, Request, Form, Query, HTTPException
+import crud
+from database import get_db
+from api_data_manager import data_manager
+from fastapi import APIRouter, Depends, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.templating import Jinja2Templates
-
-import crud
-from api_data_manager import data_manager
-from database import get_db
 
 router = APIRouter()
 

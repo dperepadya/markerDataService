@@ -1,8 +1,8 @@
 import logging
-from sqlalchemy.ext.asyncio import AsyncSession
 import cache
 import crud
 from binance_client import ExchangeClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)

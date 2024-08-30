@@ -1,4 +1,3 @@
-import aio_pika
 import json
 
 class MessageProcessor:

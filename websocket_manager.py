@@ -27,4 +27,5 @@ class WebSocketManager:
             for websocket in self.active_connections[symbol]:
                 await websocket.send_text(json.dumps(msg))
 
+
 websocket_manager = WebSocketManager()

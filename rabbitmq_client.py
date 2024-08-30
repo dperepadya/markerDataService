@@ -1,14 +1,11 @@
+import os
+import json
 import asyncio
 import logging
-import os
 import traceback
-
 from aio_pika import Message, connect_robust
-import json
-
 from aio_pika.abc import AbstractIncomingMessage, DeliveryMode
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from crud import add_ticker
 from database import SessionFactory
 from websocket_manager import websocket_manager
@@ -25,6 +22,7 @@ class RabbitMQClient:
         self.consumer_connection = None
         self.channels = {}
         self.workers = {}
+        self.last_message = None
 
     async def connect_publisher(self):
         if self.publisher_connection is None or self.publisher_connection.is_closed:
@@ -54,14 +52,14 @@ class RabbitMQClient:
         # finally:
         #     await self.publisher_connection.close()
 
-    async def run_db_worker(self, channel: str, sender: str):
+    async def run_consume_worker(self, channel: str, sender: str):
         queue_name = f'{sender}_{channel}'
         if queue_name in self.workers:
             return
         logging.info(f'Starting worker {queue_name}')
 
         async with SessionFactory() as session:
-            task = asyncio.create_task(self.db_worker(channel, sender, session))
+            task = asyncio.create_task(self.consume_worker(channel, sender, session))
             self.workers[queue_name] = task
 
     async def stop_all_workers(self):
@@ -69,7 +67,7 @@ class RabbitMQClient:
             task.cancel()
         self.workers.clear()
 
-    async def db_worker(self, channel: str, sender: str, session: AsyncSession):
+    async def consume_worker(self, channel: str, sender: str, session: AsyncSession):
         connection = await self.connect_consumer()
         queue_name = sender + '_' + channel
         logging.info(f'Running worker {queue_name}')

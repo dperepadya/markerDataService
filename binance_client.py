@@ -1,13 +1,9 @@
-import logging
 import os
+import logging
 import asyncio
-import traceback
 from abc import abstractmethod, ABC
-
 # from binance.websocket.um_futures.websocket_client import UMFuturesWebsocketClient
 from binance import AsyncClient, BinanceSocketManager
-from message_processor import MessageProcessor, BinanceMessageProcessor
-
 
 class ExchangeClient(ABC):
     def __init__(self, api_key: str, api_secret: str):
