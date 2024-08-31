@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Add Exchange</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
     <h1>Add Exchange</h1>
@@ -11,6 +12,6 @@
         <input type="text" id="name" name="name" required>
         <button type="submit">Add</button>
     </form>
-    <a href="/exchanges/">Back to Exchanges</a>
+    <a href="/exchanges/"><button>Back to Exchanges</button></a>
 </body>
 </html>

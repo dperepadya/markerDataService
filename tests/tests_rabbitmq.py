@@ -76,9 +76,15 @@ class TestRabbitMQ(unittest.IsolatedAsyncioTestCase):
 
     queue_name = f'{sender}_{channel}'
 
-    # @patch('rabbitmq_client.RabbitMQClient.process_trade_message', new=process_trade_message_mock)
-    patch('rabbitmq_client.RabbitMQClient.consume_worker', new=consume_worker_mock)
+    # 1. run_consume_worker -> asyncio.create_task(consume_worker(..)) -> 2. consume_worker ->
+    # 3. process_trade_message
+    # 1. passed:
     # @patch('rabbitmq_client.RabbitMQClient.run_consume_worker', new=run_consume_worker_mock)
+    # 2. not passed:
+    patch('rabbitmq_client.RabbitMQClient.consume_worker', new=consume_worker_mock)
+    # 3. final:
+    # @patch('rabbitmq_client.RabbitMQClient.process_trade_message', new=process_trade_message_mock)
+
     async def test_rabbitmq(self):
         rmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
         rmq_port = os.getenv('RABBITMQ_PORT', 5672)

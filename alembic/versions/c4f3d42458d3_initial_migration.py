@@ -35,7 +35,7 @@ def upgrade() -> None:
                     sa.Column('point_value', sa.Float(), nullable=False),
                     sa.Column('min_size', sa.Float(), nullable=False),
                     sa.Column('max_size', sa.Float(), nullable=False),
-                    sa.Column('price_step', sa.Float(), nullable=False),
+                    sa.Column('step_size', sa.Float(), nullable=False),
                     sa.PrimaryKeyConstraint('id'),
                     sa.UniqueConstraint('id')
                     )
@@ -45,6 +45,8 @@ def upgrade() -> None:
                     sa.Column('name', sa.String(), nullable=False),
                     sa.Column('exchange_id', sa.Integer(), nullable=False),
                     sa.Column('symbol_id', sa.Integer(), nullable=False),
+                    sa.Column('is_active', sa.Boolean(), nullable=False),
+                    sa.Column('type', sa.String(), nullable=False),
                     sa.ForeignKeyConstraint(['exchange_id'], ['exchanges.id'], ),
                     sa.ForeignKeyConstraint(['symbol_id'], ['symbols.id'], ),
                     sa.PrimaryKeyConstraint('id'),

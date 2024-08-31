@@ -28,3 +28,7 @@ TimescaleDB
         alembic.ini
             sqlalchemy.url = postgresql+asyncpg://postgres:qwerty123@localhost:5432/market_data
             sqlalchemy.url = postgresql+psycopg2://postgres:qwerty123@localhost:5432/market_data
+
+    check db in docker
+        in container: docker exec -it market_data_db psql -U postgres
+        outside container:  psql -h localhost -p 5432 -U postgres -d market_data_docker

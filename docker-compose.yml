@@ -25,12 +25,23 @@ services:
 #      - "5432:5432"
 #    volumes:
 #      - timescale_data:/var/lib/postgresql/data
+  db:
+    image: postgres
+    container_name: market_data_db
+    ports:
+      - 5433:5432
+    environment:
+      - POSTGRES_DB=market_data_docker
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=qwerty123
+    hostname: postgres_db
+
   rabbit_mq:
     image: rabbitmq:3-management
     ports:
       - 15672:15672
       - 5672:5672
-    environment:
+#    environment:
 #      - RABBITMQ_HOST=localhost
 #      - RABBITMQ_PORT=5672
 #  secrets:

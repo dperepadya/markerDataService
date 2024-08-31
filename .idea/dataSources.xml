@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:postgresql://localhost:5432/market_data</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="market_data_docker@localhost" uuid="92d72a9a-08c7-4394-8ff9-80e5bb886265">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5433/market_data_docker</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

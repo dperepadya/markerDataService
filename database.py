@@ -10,8 +10,8 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
 
 db_user = os.environ.get('DATABASE_UN', 'postgres')
 db_pass = os.environ.get('DATABASE_PWD', 'qwerty123')
-db_port = 5432
-db_name = "market_data"
+db_port = 5433
+db_name = "market_data_docker"
 
 Base = declarative_base()
 
