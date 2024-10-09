@@ -2,7 +2,7 @@
 
 **Market Data Service** is an asynchronous service focused on collecting, processing, and delivering market data from various financial markets. The service uses adapters for different market APIs, which collect data and publish it into a message bus (RabbitMQ queue). The data is then processed and delivered to subscribers or saved for further analysis in a PostgreSQL database (with TimescaleDB support).
 
-![Market Data Service Architecture](images/MDServer.png)
+![Market Data Service Architecture](images/MDServer.PNG)
 
 ## Features
 
