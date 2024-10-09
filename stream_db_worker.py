@@ -3,7 +3,7 @@ import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import sessionmaker
-from models import Ticker, Base
+from db_models import Ticker, Base
 
 class DatabaseWorker:
     def __init__(self, rabbitmq_client, db_session: sessionmaker):

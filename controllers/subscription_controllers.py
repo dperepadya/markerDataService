@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.templating import Jinja2Templates
 
 from api_data_manager import data_manager
-from models import Exchange
+from db_models import Exchange
 import crud
 from database import get_db
 

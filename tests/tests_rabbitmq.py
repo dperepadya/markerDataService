@@ -14,14 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import main
 import logging
 from database import SessionFactory
-from models import Ticker
+from db_models import Ticker
 from rabbitmq_client import RabbitMQClient
-
+logger = logging.getLogger(__name__)
 
 async def process_trade_message_mock(self, message: AbstractIncomingMessage, session: AsyncSession):
-    # data_dict = json.loads(message.body.decode('utf-8'))
-    # data_dict = json.loads(data_dict)
-    # self.last_message = data_dict
     self.last_message = {
         "timestamp": 1724939412887,
         "symbol": "ETHBTC",
@@ -80,10 +77,10 @@ class TestRabbitMQ(unittest.IsolatedAsyncioTestCase):
     # 3. process_trade_message
     # 1. passed:
     # @patch('rabbitmq_client.RabbitMQClient.run_consume_worker', new=run_consume_worker_mock)
-    # 2. not passed:
-    patch('rabbitmq_client.RabbitMQClient.consume_worker', new=consume_worker_mock)
+    # 2. passed:
+    # @patch('rabbitmq_client.RabbitMQClient.consume_worker', new=consume_worker_mock)
     # 3. final:
-    # @patch('rabbitmq_client.RabbitMQClient.process_trade_message', new=process_trade_message_mock)
+    @patch('rabbitmq_client.RabbitMQClient.process_trade_message', new=process_trade_message_mock)
 
     async def test_rabbitmq(self):
         rmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
@@ -97,6 +94,8 @@ class TestRabbitMQ(unittest.IsolatedAsyncioTestCase):
         await rabbitmq_client.run_consume_worker(self.channel, self.sender)
 
         result = rabbitmq_client.last_message
+
+        logger.debug(result)
 
         self.assertEqual(result, self.test_message)
 

@@ -1,37 +1,19 @@
-import os
 import logging
 import asyncio
-from abc import abstractmethod, ABC
 # from binance.websocket.um_futures.websocket_client import UMFuturesWebsocketClient
 from binance import AsyncClient, BinanceSocketManager
 
-class ExchangeClient(ABC):
-    def __init__(self, api_key: str, api_secret: str):
-        # {name, ...}
-        self.symbols = []
+from exchange_client import ExchangeClient
+from metatrader_client.models import SymbolInfo
 
-    @abstractmethod
-    async def init_client(self):
-        pass
-
-    @abstractmethod
-    async def subscribe(self, symbol: str, channel: str):
-        pass
-
-    @abstractmethod
-    async def unsubscribe(self, symbol: str, channel: str):
-        pass
-
-    @abstractmethod
-    async def get_symbols(self):
-        pass
 
 class BinanceClient(ExchangeClient):
-    def __init__(self, api_key: str, api_secret: str):
-        super().__init__(api_key, api_secret)
+    def __init__(self, login: str, password: str, host: str):
+        super().__init__(login, password, host)
         self.name = 'binance'
-        self.api_key = api_key
-        self.api_secret = api_secret
+        self.host = None
+        self.api_key = login
+        self.api_secret = password
         self.client = None
         self.bm = None
         self.is_running = False
@@ -41,6 +23,11 @@ class BinanceClient(ExchangeClient):
         self.depth = 5
         self.interval = 100
 
+    async def init_client(self):
+        self.client = await AsyncClient.create(self.api_key, self.api_secret)
+        self.bm = BinanceSocketManager(self.client)
+        self.symbols = await self.get_symbols()
+
     async def get_symbols(self):
         if self.client is None:
             await self.init_client()
@@ -49,22 +36,8 @@ class BinanceClient(ExchangeClient):
         # options_info = self.client.options_info()
         symbols_info = []
         for symbol in exchange_info['symbols']:
-            symbol_data = {
-                'name': symbol['symbol'],
-                'type': 's',
-                'point_value': 1.0,
-                'tick_size': float(symbol['filters'][0]['tickSize']),
-                'min_size': float(symbol['filters'][1]['minQty']),
-                'max_size': float(symbol['filters'][1]['maxQty']),
-                'step_size': float(symbol['filters'][1]['stepSize'])
-            }
-            symbols_info.append(symbol_data)
+            symbols_info.append(SymbolInfo(symbol).__dict__)
         return symbols_info
-
-    async def init_client(self):
-        self.client = await AsyncClient.create(self.api_key, self.api_secret)
-        self.bm = BinanceSocketManager(self.client)
-        self.symbols = await self.get_symbols()
 
     async def subscribe(self, symbol, channel):
         if symbol is None or channel is None:
@@ -147,7 +120,7 @@ class BinanceClient(ExchangeClient):
                         await self.message_processor.process_message(msg, self.name)
                         await asyncio.sleep(1)
             except asyncio.CancelledError:
-                # print(f'Task {self.name} {symbol} {channel} cancelled')
+                # print(f'Task {self.name} {symbol} {channel} is cancelled')
                 # traceback.print_exc()
                 await asyncio.sleep(3)
             except Exception as e:

@@ -8,9 +8,9 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import RedirectResponse
 from api_data_manager import data_manager
-from binance_client import BinanceClient
+from binance_client.binance_client import BinanceClient
+from binance_client.binance_message_processor import BinanceMessageProcessor
 from rabbitmq_client import RabbitMQClient
-from message_processor import BinanceMessageProcessor
 from controllers import exchange_controllers, subscription_controllers, ws_controllers
 
 logging.basicConfig(level=logging.INFO)

@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from cache import exchanges_cache, symbols_cache
-from models import Ticker, OrderBook, Exchange, Symbol, Subscription
+from db_models import Ticker, OrderBook, Exchange, Symbol, Subscription
 
 logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
 

@@ -1,5 +1,5 @@
 import logging
-from models import Exchange, Symbol
+from db_models import Exchange, Symbol
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -66,6 +66,8 @@ class RabbitMQClient:
         for task in self.workers.values():
             task.cancel()
         self.workers.clear()
+        await self.consumer_connection.close()
+        await self.publisher_connection.close()
 
     async def consume_worker(self, channel: str, sender: str, session: AsyncSession):
         connection = await self.connect_consumer()
@@ -77,11 +79,17 @@ class RabbitMQClient:
         queue = await channel_obj.declare_queue(queue_name, durable=False, auto_delete=False)
         await queue.purge()
         logging.info(f'Starting {channel} Channel consumer')
+
+        async def process_message(message: AbstractIncomingMessage):
+            await self.process_trade_message(message, session)
+
         try:
             if channel == 'trades':
-                await queue.consume(lambda message: self.process_trade_message(message, session))
+                # await queue.consume(lambda message: self.process_trade_message(message, session))
+                await queue.consume(process_message)
             elif channel == 'order_book':
-                await queue.consume(lambda message: self.process_dom_message(message, session))
+                # await queue.consume(lambda message: self.process_dom_message(message, session))
+                await queue.consume(process_message)
             else:
                 logging.info("There is no channels to be handled")
                 return
